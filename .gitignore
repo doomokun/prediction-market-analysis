@@ -13,6 +13,7 @@ wheels/
 .venv
 .backfill_cursor
 data
+data.**
 data.zip
 
 research/*

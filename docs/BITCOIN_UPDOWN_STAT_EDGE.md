@@ -25,6 +25,7 @@ The analysis:
 ## Tenor Buckets
 
 - `15m`: explicit ranged questions like `5:00PM-5:15PM ET`
+- `5m`: explicit ranged questions like `5:00PM-5:05PM ET`
 - `1h`: hourly questions like `5PM ET`
 - `1d`: daily questions like `Bitcoin Up or Down on February 5?`
 - `other`: excluded from V1 signal estimation

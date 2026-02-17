@@ -46,6 +46,7 @@ class BitcoinUpDownStatEdgeAnalysis(Analysis):
         "equal_market_sign",
         "equal_notional_sign",
     ]
+    _CANDIDATE_INTERNAL_COLUMNS = EDGE_COLUMNS + ["candidate_status"]
 
     OUTPUT_COLUMNS = [
         "market_id",
@@ -83,18 +84,33 @@ class BitcoinUpDownStatEdgeAnalysis(Analysis):
         self.blocks_dir = Path(blocks_dir or base_dir / "data" / "polymarket" / "blocks")
 
         self._last_coverage: dict[str, Any] = {}
-        self._last_edge_candidates = pd.DataFrame(columns=self.EDGE_COLUMNS)
+        self._last_edge_candidates = pd.DataFrame(columns=self._CANDIDATE_INTERNAL_COLUMNS)
         self._last_heatmap_figure: Figure | None = None
 
     def run(self) -> AnalysisOutput:
         """Execute the analysis and return outputs."""
         con = duckdb.connect()
 
+        market_columns = set(
+            con.execute(
+                f"""
+                SELECT *
+                FROM '{self.markets_dir}/*.parquet'
+                LIMIT 0
+                """
+            ).df().columns
+        )
+        where_clause = (
+            "lower(slug) LIKE 'btc-updown-5m%'"
+            if "slug" in market_columns
+            else "lower(question) LIKE 'bitcoin up or down%'"
+        )
+
         markets_df = con.execute(
             f"""
             SELECT id, question, outcomes, outcome_prices, clob_token_ids, end_date
             FROM '{self.markets_dir}/*.parquet'
-            WHERE lower(question) LIKE 'bitcoin up or down%'
+            WHERE {where_clause}
             """
         ).df()
 
@@ -103,7 +119,7 @@ class BitcoinUpDownStatEdgeAnalysis(Analysis):
         self._last_coverage = coverage
 
         if token_labels_df.empty:
-            self._last_edge_candidates = pd.DataFrame(columns=self.EDGE_COLUMNS)
+            self._last_edge_candidates = pd.DataFrame(columns=self._CANDIDATE_INTERNAL_COLUMNS)
             self._last_heatmap_figure = self._create_empty_heatmap()
             return AnalysisOutput(
                 figure=self._create_empty_main_figure(),
@@ -172,7 +188,7 @@ class BitcoinUpDownStatEdgeAnalysis(Analysis):
         ).df()
 
         if trades_df.empty:
-            self._last_edge_candidates = pd.DataFrame(columns=self.EDGE_COLUMNS)
+            self._last_edge_candidates = pd.DataFrame(columns=self._CANDIDATE_INTERNAL_COLUMNS)
             self._last_heatmap_figure = self._create_empty_heatmap()
             return AnalysisOutput(
                 figure=self._create_empty_main_figure(),
@@ -240,7 +256,10 @@ class BitcoinUpDownStatEdgeAnalysis(Analysis):
         if "csv" in selected_formats:
             candidate_path = output_dir / "bitcoin_updown_edge_candidates.csv"
             candidate_df = self._last_edge_candidates.copy()
-            candidate_df = candidate_df[candidate_df["candidate_status"] != "rejected"]
+            if "candidate_status" in candidate_df.columns:
+                candidate_df = candidate_df[candidate_df["candidate_status"] != "rejected"]
+            else:
+                candidate_df = pd.DataFrame(columns=self.EDGE_COLUMNS)
             if candidate_df.empty:
                 candidate_df = pd.DataFrame(columns=self.EDGE_COLUMNS)
             candidate_df[self.EDGE_COLUMNS].to_csv(candidate_path, index=False)

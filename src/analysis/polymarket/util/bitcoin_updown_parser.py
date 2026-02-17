@@ -96,6 +96,8 @@ def parse_tenor_bucket(question: str | None) -> str:
         if end_minutes < start_minutes:
             end_minutes += 24 * 60
         delta = end_minutes - start_minutes
+        if delta == 5:
+            return "5m"
         if delta == 15:
             return "15m"
         if delta == 60:

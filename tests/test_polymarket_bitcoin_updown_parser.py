@@ -12,6 +12,7 @@ from src.analysis.polymarket.util.bitcoin_updown_parser import (
 
 
 def test_parse_tenor_bucket_variants():
+    assert parse_tenor_bucket("Bitcoin Up or Down - February 3, 5:00PM-5:05PM ET") == "5m"
     assert parse_tenor_bucket("Bitcoin Up or Down - February 3, 5:00PM-5:15PM ET") == "15m"
     assert parse_tenor_bucket("Bitcoin Up or Down - February 3, 5PM ET") == "1h"
     assert parse_tenor_bucket("Bitcoin Up or Down on February 3?") == "1d"

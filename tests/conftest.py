@@ -256,7 +256,7 @@ def polymarket_legacy_trades_dir(tmp_path_factory: pytest.TempPathFactory) -> Pa
 @pytest.fixture(scope="session")
 def polymarket_markets_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
     d = tmp_path_factory.mktemp("polymarket_markets")
-    _make_polymarket_markets().to_parquet(d / "markets.parquet")
+    _make_polymarket_bitcoin_markets().to_parquet(d / "markets.parquet")
     return d
 
 
