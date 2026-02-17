@@ -165,6 +165,43 @@ def _make_polymarket_markets() -> pd.DataFrame:
     )
 
 
+def _make_polymarket_bitcoin_markets() -> pd.DataFrame:
+    """Build minimal Polymarket markets DataFrame (2 rows).
+
+    Market A resolved Up (daily tenor), has FPMM address.
+    Market B resolved Down (15m tenor).
+    """
+    base_created = pd.Timestamp("2024-05-20 00:00:00", tz="UTC")
+    return pd.DataFrame(
+        [
+            {
+                "id": "market_a",
+                "question": "Bitcoin Up or Down on June 1?",
+                "outcomes": json.dumps(["Up", "Down"]),
+                "clob_token_ids": json.dumps(["token_yes_a", "token_no_a"]),
+                "outcome_prices": json.dumps([1.0, 0.0]),
+                "market_maker_address": "0xfpmm_address_a",
+                "end_date": pd.Timestamp("2024-06-02 00:00:00", tz="UTC"),
+                "created_at": base_created,
+                "active": True,
+                "closed": True,
+            },
+            {
+                "id": "market_b",
+                "question": "Bitcoin Up or Down - June 1, 12:00PM-12:15PM ET",
+                "outcomes": json.dumps(["Up", "Down"]),
+                "clob_token_ids": json.dumps(["token_yes_b", "token_no_b"]),
+                "outcome_prices": json.dumps([0.0, 1.0]),
+                "market_maker_address": None,
+                "end_date": pd.Timestamp("2024-06-01 16:15:00", tz="UTC"),
+                "created_at": base_created,
+                "active": True,
+                "closed": True,
+            },
+        ]
+    )
+
+
 def _make_polymarket_blocks(ctf_trades: pd.DataFrame, legacy_trades: pd.DataFrame) -> pd.DataFrame:
     """Build blocks DataFrame with an entry for every exact block_number in trades.
 
@@ -220,6 +257,13 @@ def polymarket_legacy_trades_dir(tmp_path_factory: pytest.TempPathFactory) -> Pa
 def polymarket_markets_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
     d = tmp_path_factory.mktemp("polymarket_markets")
     _make_polymarket_markets().to_parquet(d / "markets.parquet")
+    return d
+
+
+@pytest.fixture(scope="session")
+def polymarket_bitcoin_markets_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    d = tmp_path_factory.mktemp("polymarket_markets")
+    _make_polymarket_bitcoin_markets().to_parquet(d / "markets.parquet")
     return d
 
 
